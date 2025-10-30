@@ -1,0 +1,10 @@
+# Dependencias de Node
+node_modules/
+
+# Archivos y carpetas de entorno
+.env
+.DS_Store
+
+# Logs y bases de datos locales
+*.log
+*.sqlite
