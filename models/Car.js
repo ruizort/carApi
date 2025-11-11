@@ -1,3 +1,5 @@
+// models/Car.js
+
 'use strict';
 const {
   Model
@@ -27,10 +29,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
     },
-    // Añadimos un campo para la imagen del auto
     imageUrl: {
         type: DataTypes.STRING,
         allowNull: true 
+    },
+    description: { // ✨ CAMPO AÑADIDO
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    isRented: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false
+    },
+    availableUntil: { 
+      type: DataTypes.DATE,
+      allowNull: true
     }
   }, {
     sequelize,
