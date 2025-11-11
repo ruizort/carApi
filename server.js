@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 });
 
 // ----------------------------------------------------
-// RUTAS DE LA API (Aquí las integrarás en la Fase 3)
+// RUTAS DE LA API (faltan todavia)
 // Ejemplo de ruta de prueba:
 app.get('/', (req, res) => {
     res.status(200).json({ message: "API de Autos OK." });
@@ -31,6 +31,8 @@ app.get('/', (req, res) => {
 // ----------------------------------------------------
 
 // Inicializar DB y Arrancar Servidor
+
+//instalar xamp o algun otro y crear una base de datos con el nombre CarApi
 db.sequelize.authenticate()
   .then(() => {
     console.log('✅ Conexión a la base de datos exitosa.');
