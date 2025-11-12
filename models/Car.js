@@ -1,3 +1,5 @@
+// models/Car.js
+
 'use strict';
 const {
   Model
@@ -28,8 +30,8 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     imageUrl: {
-        type: DataTypes.STRING,
-        allowNull: true 
+      type: DataTypes.STRING,
+      allowNull: true 
     },
     description: { // ✨ CAMPO AÑADIDO
       type: DataTypes.TEXT,
