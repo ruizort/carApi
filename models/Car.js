@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true 
     },
-    description: { // ✨ CAMPO AÑADIDO
+    description: {
       type: DataTypes.TEXT,
       allowNull: true
     },
