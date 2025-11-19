@@ -1,27 +1,30 @@
 'use strict';
 
+const bcrypt = require('bcrypt');
+
 // Fecha de disponibilidad para los autos rentados (ej: 7 días en el futuro)
 const rentedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); 
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     
-    // 1. Insertar Usuarios de Prueba (Sin Cambios)
+    const hashedPassword = await bcrypt.hash('password123', 10);
+   
     await queryInterface.bulkInsert('Users', [{
       name: 'Admin User',
       email: 'admin@test.com',
-      password: 'password123', // Usar hash real en producción
+      password: hashedPassword,
       role: 'admin',
       createdAt: new Date(),
       updatedAt: new Date()
     }, {
       name: 'Basic User',
       email: 'user@test.com',
-      password: 'password123',
+      password: hashedPassword,
       role: 'user',
       createdAt: new Date(),
       updatedAt: new Date()
-    }], {});
+    }], {});  
 
     // 
     await queryInterface.bulkInsert('Cars', [
