@@ -1,5 +1,4 @@
 // models/Car.js
-
 'use strict';
 const {
   Model
@@ -8,9 +7,14 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Car extends Model {
     static associate(models) {
-      // configurar despues asociaciones
+      // ✅ AGREGAR: Un auto puede tener muchas reservas
+      Car.hasMany(models.Reservation, {
+        foreignKey: 'carId',
+        as: 'reservations'
+      });
     }
   }
+  
   Car.init({
     id: {
       type: DataTypes.INTEGER,
@@ -51,5 +55,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Car',
     tableName: 'Cars',
   });
+  
   return Car;
 };
