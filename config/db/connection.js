@@ -1,7 +1,6 @@
 // src/db/connection.js
 const db = require('../../models'); // Importa los modelos y la instancia de Sequelize
 
-const userFixSeeder = require('../../seeders/20251119175549-fix-users-passwords-for-production');
 
 /**
  * Función que autentica la conexión a la base de datos y sincroniza los modelos.
@@ -16,8 +15,6 @@ async function connectAndSyncDB() {
     await db.sequelize.sync({ alter: true }); 
     console.log('✅ Tablas sincronizadas (Users, Cars, etc.).');
     
-        await userFixSeeder.up(db.sequelize.getQueryInterface(), db.Sequelize);
-      console.log('🌱 Seeder ejecutado: fix-users-passwords-for-production');
 
     // Devolvemos la instancia de Express para que se pueda arrancar
     return db.sequelize; 

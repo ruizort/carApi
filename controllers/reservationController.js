@@ -446,3 +446,180 @@ exports.checkAvailability = async (req, res) => {
     });
   }
 };
+
+// --- 7. CANCELAR RESERVA ACTIVA POR CAR ID (NUEVO MÉTODO) ---
+exports.cancelActiveReservationByCar = async (req, res) => {
+  try {
+    const { carId } = req.params;
+
+    // Buscar reserva activa para este auto
+    const activeReservation = await Reservation.findOne({
+      where: {
+        carId: carId,
+        status: {
+          [Op.in]: ['confirmed', 'active']
+        },
+        endDate: {
+          [Op.gte]: new Date()
+        }
+      },
+      include: [
+        {
+          model: Car,
+          as: 'car',
+          attributes: ['id', 'brand', 'model']
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email']
+        }
+      ]
+    });
+
+    if (!activeReservation) {
+      return res.status(404).json({
+        message: 'No se encontró una reserva activa para este auto'
+      });
+    }
+
+    // Cancelar la reserva
+    activeReservation.status = 'cancelled';
+    await activeReservation.save();
+
+    res.json({
+      message: 'Reserva activa cancelada exitosamente',
+      reservation: activeReservation
+    });
+
+  } catch (error) {
+    console.error('Error al cancelar reserva activa:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+exports.getAllReservations = async (req, res) => {
+  try {
+    const reservations = await Reservation.findAll({
+      include: [
+        {
+          model: Car,
+          as: 'car',
+          attributes: ['id', 'brand', 'model', 'price', 'imageUrl']
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      reservations,
+      count: reservations.length
+    });
+
+  } catch (error) {
+    console.error('Error al obtener todas las reservas:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+exports.getActiveReservations = async (req, res) => {
+  try {
+    const reservations = await Reservation.findAll({
+      where: {
+        status: {
+          [Op.in]: ['confirmed', 'active']
+        },
+        endDate: {
+          [Op.gte]: new Date()
+        }
+      },
+      include: [
+        {
+          model: Car,
+          as: 'car',
+          attributes: ['id', 'brand', 'model']
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email']
+        }
+      ],
+      order: [['startDate', 'ASC']]
+    });
+
+    res.json(reservations);
+
+  } catch (error) {
+    console.error('Error al obtener reservas activas:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};
+
+exports.getBlockedDates = async (req, res) => {
+  try {
+    const { carId } = req.params;
+    
+    console.log('📅 Fetching blocked dates for car:', carId);
+
+    // Validar carId
+    if (!carId || isNaN(parseInt(carId))) {
+      return res.status(400).json({ 
+        error: 'ID de auto inválido' 
+      });
+    }
+
+    const reservations = await Reservation.findAll({
+      where: { 
+        carId: parseInt(carId),
+        status: ['confirmed', 'active']
+      },
+      attributes: ['startDate', 'endDate']
+    });
+
+    console.log('📅 Found reservations:', reservations.length);
+
+    const blockedDates = [];
+    
+    reservations.forEach(reservation => {
+      const start = new Date(reservation.startDate);
+      const end = new Date(reservation.endDate);
+      
+      // Generar rango de fechas
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        blockedDates.push(date.toISOString().split('T')[0]);
+      }
+    });
+
+    // Eliminar duplicados (por si acaso)
+    const uniqueBlockedDates = [...new Set(blockedDates)].sort();
+    
+    console.log('📅 Unique blocked dates:', uniqueBlockedDates.length);
+    
+    res.json({ 
+      blockedDates: uniqueBlockedDates,
+      count: uniqueBlockedDates.length 
+    });
+
+  } catch (error) {
+    console.error('❌ Error getting blocked dates:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor',
+      message: error.message 
+    });
+  }
+};

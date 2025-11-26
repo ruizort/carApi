@@ -15,46 +15,39 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   
-  Car.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
-    },
-    brand: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    model: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    price: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
-    },
-    imageUrl: {
-      type: DataTypes.STRING,
-      allowNull: true 
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    isRented: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      allowNull: false
-    },
-    availableUntil: { 
-      type: DataTypes.DATE,
-      allowNull: true
-    }
-  }, {
-    sequelize,
-    modelName: 'Car',
-    tableName: 'Cars',
-  });
+  // models/Car.js
+Car.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  brand: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  model: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true 
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+  // ELIMINAR: isRented y availableUntil
+}, {
+  sequelize,
+  modelName: 'Car',
+  tableName: 'Cars',
+});
   
   return Car;
 };

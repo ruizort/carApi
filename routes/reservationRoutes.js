@@ -2,22 +2,24 @@ const express = require('express');
 const router = express.Router();
 const reservationController = require('../controllers/reservationController');
 
-// POST /reservations - Crear nueva reserva
+// Rutas específicas primero
 router.post('/', reservationController.createReservation);
-
-// GET /reservations/availability - Verificar disponibilidad
 router.get('/availability', reservationController.checkAvailability);
-
-// GET /reservations/user/:userId - Obtener reservas de un usuario
 router.get('/user/:userId', reservationController.getUserReservations);
 
-// GET /reservations/:id - Obtener una reserva por ID
+// NUEVAS RUTAS - deben ir ANTES de las rutas con parámetros
+router.get('/all', reservationController.getAllReservations);
+router.get('/active', reservationController.getActiveReservations);
+
+// ✅ RUTA MOVIDA AL CONTROLLER
+router.get('/car/:carId/blocked-dates', reservationController.getBlockedDates);
+
+// Rutas con parámetros dinámicos
 router.get('/:id', reservationController.getReservationById);
-
-// PUT /reservations/:id - Actualizar reserva
 router.put('/:id', reservationController.updateReservation);
-
-// DELETE /reservations/:id - Cancelar reserva
 router.delete('/:id', reservationController.cancelReservation);
+
+// NUEVA RUTA: Liberar reserva activa por carId
+router.delete('/car/:carId/active', reservationController.cancelActiveReservationByCar);
 
 module.exports = router;
