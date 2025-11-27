@@ -14,5 +14,20 @@
     "predev": "npm run db:create",
     "start": "node index.js",
     "dev": "nodemon index.js"
-  }
+  },
+  "name": "carapi",
+  "version": "1.0.0",
+  "description": "Este proyecto es un Sistema Integral para Concesionarias de Autos, enfocado en la gestión de inventario de los vehiculos, usuarios y alquiler de los mismos. Permite gestionar usuarios, autos y reservas con una arquitectura MVC clara\r y código organizado para facilitar mantenimiento y escalabilidad. El sistema cumplirá con los requerimientos técnicos de la consigna del Trabajo Final TP2.",
+  "main": "index.js",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruizort/carApi.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ruizort/carApi/issues"
+  },
+  "homepage": "https://github.com/ruizort/carApi#readme"
 }
