@@ -1,15 +1,18 @@
-const { Reservation, Car, User } = require('../models');
-const { Op } = require('sequelize');
+import db from "../models/index.js";
+const { Reservation, Car, User } = db;
+
+import { Op } from "sequelize";
 
 // --- 1. CREAR RESERVA ---
-exports.createReservation = async (req, res) => {
+const createReservation = async (req, res) => {
   try {
     const { userId, carId, startDate, endDate } = req.body;
 
     // Validaciones básicas
     if (!userId || !carId || !startDate || !endDate) {
       return res.status(400).json({
-        message: 'Todos los campos son requeridos: userId, carId, startDate, endDate'
+        message:
+          "Todos los campos son requeridos: userId, carId, startDate, endDate",
       });
     }
 
@@ -22,23 +25,23 @@ exports.createReservation = async (req, res) => {
     // Validar fechas
     if (start < today) {
       return res.status(400).json({
-        message: 'La fecha de inicio no puede ser en el pasado'
+        message: "La fecha de inicio no puede ser en el pasado",
       });
     }
 
     if (end <= start) {
       return res.status(400).json({
-        message: 'La fecha de fin debe ser posterior a la fecha de inicio'
+        message: "La fecha de fin debe ser posterior a la fecha de inicio",
       });
     }
 
     // Calcular días de alquiler
     const timeDiff = end.getTime() - start.getTime();
     const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
+
     if (totalDays < 1) {
       return res.status(400).json({
-        message: 'El período mínimo de alquiler es 1 día'
+        message: "El período mínimo de alquiler es 1 día",
       });
     }
 
@@ -46,7 +49,7 @@ exports.createReservation = async (req, res) => {
     const car = await Car.findByPk(carId);
     if (!car) {
       return res.status(404).json({
-        message: 'Auto no encontrado'
+        message: "Auto no encontrado",
       });
     }
 
@@ -54,7 +57,7 @@ exports.createReservation = async (req, res) => {
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({
-        message: 'Usuario no encontrado'
+        message: "Usuario no encontrado",
       });
     }
 
@@ -63,32 +66,32 @@ exports.createReservation = async (req, res) => {
       where: {
         carId,
         status: {
-          [Op.in]: ['confirmed', 'active', 'pending']
+          [Op.in]: ["confirmed", "active", "pending"],
         },
         [Op.or]: [
           {
             startDate: {
-              [Op.between]: [startDate, endDate]
-            }
+              [Op.between]: [startDate, endDate],
+            },
           },
           {
             endDate: {
-              [Op.between]: [startDate, endDate]
-            }
+              [Op.between]: [startDate, endDate],
+            },
           },
           {
             [Op.and]: [
               { startDate: { [Op.lte]: startDate } },
-              { endDate: { [Op.gte]: endDate } }
-            ]
-          }
-        ]
-      }
+              { endDate: { [Op.gte]: endDate } },
+            ],
+          },
+        ],
+      },
     });
 
     if (existingReservation) {
       return res.status(409).json({
-        message: 'El auto no está disponible en las fechas seleccionadas'
+        message: "El auto no está disponible en las fechas seleccionadas",
       });
     }
 
@@ -103,7 +106,7 @@ exports.createReservation = async (req, res) => {
       endDate,
       totalDays,
       totalPrice,
-      status: 'confirmed' // Reserva inmediata confirmada
+      status: "confirmed", // Reserva inmediata confirmada
     });
 
     // Obtener la reserva con datos del auto y usuario
@@ -111,33 +114,32 @@ exports.createReservation = async (req, res) => {
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model', 'price', 'imageUrl']
+          as: "car",
+          attributes: ["id", "brand", "model", "price", "imageUrl"],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
-      ]
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
     });
 
     res.status(201).json({
-      message: 'Reserva creada exitosamente',
-      reservation: reservationWithDetails
+      message: "Reserva creada exitosamente",
+      reservation: reservationWithDetails,
     });
-
   } catch (error) {
-    console.error('Error al crear reserva:', error);
+    console.error("Error al crear reserva:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 2. OBTENER RESERVAS DE UN USUARIO ---
-exports.getUserReservations = async (req, res) => {
+const getUserReservations = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -146,29 +148,35 @@ exports.getUserReservations = async (req, res) => {
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model', 'price', 'imageUrl', 'description']
-        }
+          as: "car",
+          attributes: [
+            "id",
+            "brand",
+            "model",
+            "price",
+            "imageUrl",
+            "description",
+          ],
+        },
       ],
-      order: [['createdAt', 'DESC']]
+      order: [["createdAt", "DESC"]],
     });
 
     res.json({
       reservations,
-      count: reservations.length
+      count: reservations.length,
     });
-
   } catch (error) {
-    console.error('Error al obtener reservas:', error);
+    console.error("Error al obtener reservas:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 3. OBTENER UNA RESERVA POR ID ---
-exports.getReservationById = async (req, res) => {
+const getReservationById = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -176,36 +184,42 @@ exports.getReservationById = async (req, res) => {
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model', 'price', 'imageUrl', 'description']
+          as: "car",
+          attributes: [
+            "id",
+            "brand",
+            "model",
+            "price",
+            "imageUrl",
+            "description",
+          ],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
-      ]
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
     });
 
     if (!reservation) {
       return res.status(404).json({
-        message: 'Reserva no encontrada'
+        message: "Reserva no encontrada",
       });
     }
 
     res.json(reservation);
-
   } catch (error) {
-    console.error('Error al obtener reserva:', error);
+    console.error("Error al obtener reserva:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 4. ACTUALIZAR RESERVA ---
-exports.updateReservation = async (req, res) => {
+const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;
     const { startDate, endDate } = req.body;
@@ -215,21 +229,21 @@ exports.updateReservation = async (req, res) => {
       include: [
         {
           model: Car,
-          as: 'car'
-        }
-      ]
+          as: "car",
+        },
+      ],
     });
 
     if (!reservation) {
       return res.status(404).json({
-        message: 'Reserva no encontrada'
+        message: "Reserva no encontrada",
       });
     }
 
     // Solo permitir modificar reservas confirmadas
-    if (reservation.status !== 'confirmed') {
+    if (reservation.status !== "confirmed") {
       return res.status(400).json({
-        message: 'Solo se pueden modificar reservas confirmadas'
+        message: "Solo se pueden modificar reservas confirmadas",
       });
     }
 
@@ -246,23 +260,23 @@ exports.updateReservation = async (req, res) => {
       // Validar nuevas fechas
       if (start < today) {
         return res.status(400).json({
-          message: 'La fecha de inicio no puede ser en el pasado'
+          message: "La fecha de inicio no puede ser en el pasado",
         });
       }
 
       if (end <= start) {
         return res.status(400).json({
-          message: 'La fecha de fin debe ser posterior a la fecha de inicio'
+          message: "La fecha de fin debe ser posterior a la fecha de inicio",
         });
       }
 
       // Calcular nuevos días
       const timeDiff = end.getTime() - start.getTime();
       const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-      
+
       if (totalDays < 1) {
         return res.status(400).json({
-          message: 'El período mínimo de alquiler es 1 día'
+          message: "El período mínimo de alquiler es 1 día",
         });
       }
 
@@ -272,32 +286,33 @@ exports.updateReservation = async (req, res) => {
           carId: reservation.carId,
           id: { [Op.ne]: id }, // Excluir la reserva actual
           status: {
-            [Op.in]: ['confirmed', 'active', 'pending']
+            [Op.in]: ["confirmed", "active", "pending"],
           },
           [Op.or]: [
             {
               startDate: {
-                [Op.between]: [newStartDate, newEndDate]
-              }
+                [Op.between]: [newStartDate, newEndDate],
+              },
             },
             {
               endDate: {
-                [Op.between]: [newStartDate, newEndDate]
-              }
+                [Op.between]: [newStartDate, newEndDate],
+              },
             },
             {
               [Op.and]: [
                 { startDate: { [Op.lte]: newStartDate } },
-                { endDate: { [Op.gte]: newEndDate } }
-              ]
-            }
-          ]
-        }
+                { endDate: { [Op.gte]: newEndDate } },
+              ],
+            },
+          ],
+        },
       });
 
       if (existingReservation) {
         return res.status(409).json({
-          message: 'El auto no está disponible en las nuevas fechas seleccionadas'
+          message:
+            "El auto no está disponible en las nuevas fechas seleccionadas",
         });
       }
 
@@ -315,33 +330,32 @@ exports.updateReservation = async (req, res) => {
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model', 'price', 'imageUrl']
+          as: "car",
+          attributes: ["id", "brand", "model", "price", "imageUrl"],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
-      ]
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
     });
 
     res.json({
-      message: 'Reserva actualizada exitosamente',
-      reservation: updatedReservation
+      message: "Reserva actualizada exitosamente",
+      reservation: updatedReservation,
     });
-
   } catch (error) {
-    console.error('Error al actualizar reserva:', error);
+    console.error("Error al actualizar reserva:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 5. CANCELAR RESERVA ---
-exports.cancelReservation = async (req, res) => {
+const cancelReservation = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -349,43 +363,42 @@ exports.cancelReservation = async (req, res) => {
 
     if (!reservation) {
       return res.status(404).json({
-        message: 'Reserva no encontrada'
+        message: "Reserva no encontrada",
       });
     }
 
     // Solo permitir cancelar reservas confirmadas
-    if (reservation.status !== 'confirmed') {
+    if (reservation.status !== "confirmed") {
       return res.status(400).json({
-        message: 'Solo se pueden cancelar reservas confirmadas'
+        message: "Solo se pueden cancelar reservas confirmadas",
       });
     }
 
     // Cambiar estado a cancelado
-    reservation.status = 'cancelled';
+    reservation.status = "cancelled";
     await reservation.save();
 
     res.json({
-      message: 'Reserva cancelada exitosamente',
-      reservation
+      message: "Reserva cancelada exitosamente",
+      reservation,
     });
-
   } catch (error) {
-    console.error('Error al cancelar reserva:', error);
+    console.error("Error al cancelar reserva:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 6. VERIFICAR DISPONIBILIDAD ---
-exports.checkAvailability = async (req, res) => {
+const checkAvailability = async (req, res) => {
   try {
     const { carId, startDate, endDate } = req.query;
 
     if (!carId || !startDate || !endDate) {
       return res.status(400).json({
-        message: 'carId, startDate y endDate son requeridos'
+        message: "carId, startDate y endDate son requeridos",
       });
     }
 
@@ -394,7 +407,7 @@ exports.checkAvailability = async (req, res) => {
 
     if (end <= start) {
       return res.status(400).json({
-        message: 'La fecha de fin debe ser posterior a la fecha de inicio'
+        message: "La fecha de fin debe ser posterior a la fecha de inicio",
       });
     }
 
@@ -403,52 +416,51 @@ exports.checkAvailability = async (req, res) => {
       where: {
         carId,
         status: {
-          [Op.in]: ['confirmed', 'active', 'pending']
+          [Op.in]: ["confirmed", "active", "pending"],
         },
         [Op.or]: [
           {
             startDate: {
-              [Op.between]: [startDate, endDate]
-            }
+              [Op.between]: [startDate, endDate],
+            },
           },
           {
             endDate: {
-              [Op.between]: [startDate, endDate]
-            }
+              [Op.between]: [startDate, endDate],
+            },
           },
           {
             [Op.and]: [
               { startDate: { [Op.lte]: startDate } },
-              { endDate: { [Op.gte]: endDate } }
-            ]
-          }
-        ]
-      }
+              { endDate: { [Op.gte]: endDate } },
+            ],
+          },
+        ],
+      },
     });
 
     const isAvailable = !existingReservation;
 
     res.json({
       isAvailable,
-      message: isAvailable 
-        ? 'El auto está disponible en las fechas seleccionadas' 
-        : 'El auto no está disponible en las fechas seleccionadas',
+      message: isAvailable
+        ? "El auto está disponible en las fechas seleccionadas"
+        : "El auto no está disponible en las fechas seleccionadas",
       carId,
       startDate,
-      endDate
+      endDate,
     });
-
   } catch (error) {
-    console.error('Error al verificar disponibilidad:', error);
+    console.error("Error al verificar disponibilidad:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
 // --- 7. CANCELAR RESERVA ACTIVA POR CAR ID (NUEVO MÉTODO) ---
-exports.cancelActiveReservationByCar = async (req, res) => {
+const cancelActiveReservationByCar = async (req, res) => {
   try {
     const { carId } = req.params;
 
@@ -457,169 +469,182 @@ exports.cancelActiveReservationByCar = async (req, res) => {
       where: {
         carId: carId,
         status: {
-          [Op.in]: ['confirmed', 'active']
+          [Op.in]: ["confirmed", "active"],
         },
         endDate: {
-          [Op.gte]: new Date()
-        }
+          [Op.gte]: new Date(),
+        },
       },
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model']
+          as: "car",
+          attributes: ["id", "brand", "model"],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
-      ]
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+      ],
     });
 
     if (!activeReservation) {
       return res.status(404).json({
-        message: 'No se encontró una reserva activa para este auto'
+        message: "No se encontró una reserva activa para este auto",
       });
     }
 
     // Cancelar la reserva
-    activeReservation.status = 'cancelled';
+    activeReservation.status = "cancelled";
     await activeReservation.save();
 
     res.json({
-      message: 'Reserva activa cancelada exitosamente',
-      reservation: activeReservation
+      message: "Reserva activa cancelada exitosamente",
+      reservation: activeReservation,
     });
-
   } catch (error) {
-    console.error('Error al cancelar reserva activa:', error);
+    console.error("Error al cancelar reserva activa:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
-exports.getAllReservations = async (req, res) => {
+const getAllReservations = async (req, res) => {
   try {
     const reservations = await Reservation.findAll({
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model', 'price', 'imageUrl']
+          as: "car",
+          attributes: ["id", "brand", "model", "price", "imageUrl"],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
       ],
-      order: [['createdAt', 'DESC']]
+      order: [["createdAt", "DESC"]],
     });
 
     res.json({
       reservations,
-      count: reservations.length
+      count: reservations.length,
     });
-
   } catch (error) {
-    console.error('Error al obtener todas las reservas:', error);
+    console.error("Error al obtener todas las reservas:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
-exports.getActiveReservations = async (req, res) => {
+const getActiveReservations = async (req, res) => {
   try {
     const reservations = await Reservation.findAll({
       where: {
         status: {
-          [Op.in]: ['confirmed', 'active']
+          [Op.in]: ["confirmed", "active"],
         },
         endDate: {
-          [Op.gte]: new Date()
-        }
+          [Op.gte]: new Date(),
+        },
       },
       include: [
         {
           model: Car,
-          as: 'car',
-          attributes: ['id', 'brand', 'model']
+          as: "car",
+          attributes: ["id", "brand", "model"],
         },
         {
           model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'email']
-        }
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
       ],
-      order: [['startDate', 'ASC']]
+      order: [["startDate", "ASC"]],
     });
 
     res.json(reservations);
-
   } catch (error) {
-    console.error('Error al obtener reservas activas:', error);
+    console.error("Error al obtener reservas activas:", error);
     res.status(500).json({
-      message: 'Error interno del servidor',
-      error: error.message
+      message: "Error interno del servidor",
+      error: error.message,
     });
   }
 };
 
-exports.getBlockedDates = async (req, res) => {
+const getBlockedDates = async (req, res) => {
   try {
     const { carId } = req.params;
-    
-    console.log('📅 Fetching blocked dates for car:', carId);
+
+    console.log("📅 Fetching blocked dates for car:", carId);
 
     // Validar carId
     if (!carId || isNaN(parseInt(carId))) {
-      return res.status(400).json({ 
-        error: 'ID de auto inválido' 
+      return res.status(400).json({
+        error: "ID de auto inválido",
       });
     }
 
     const reservations = await Reservation.findAll({
-      where: { 
+      where: {
         carId: parseInt(carId),
-        status: ['confirmed', 'active']
+        status: ["confirmed", "active"],
       },
-      attributes: ['startDate', 'endDate']
+      attributes: ["startDate", "endDate"],
     });
 
-    console.log('📅 Found reservations:', reservations.length);
+    console.log("📅 Found reservations:", reservations.length);
 
     const blockedDates = [];
-    
-    reservations.forEach(reservation => {
+
+    reservations.forEach((reservation) => {
       const start = new Date(reservation.startDate);
       const end = new Date(reservation.endDate);
-      
+
       // Generar rango de fechas
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        blockedDates.push(date.toISOString().split('T')[0]);
+      for (
+        let date = new Date(start);
+        date <= end;
+        date.setDate(date.getDate() + 1)
+      ) {
+        blockedDates.push(date.toISOString().split("T")[0]);
       }
     });
 
     // Eliminar duplicados (por si acaso)
     const uniqueBlockedDates = [...new Set(blockedDates)].sort();
-    
-    console.log('📅 Unique blocked dates:', uniqueBlockedDates.length);
-    
-    res.json({ 
-      blockedDates: uniqueBlockedDates,
-      count: uniqueBlockedDates.length 
-    });
 
+    console.log("📅 Unique blocked dates:", uniqueBlockedDates.length);
+
+    res.json({
+      blockedDates: uniqueBlockedDates,
+      count: uniqueBlockedDates.length,
+    });
   } catch (error) {
-    console.error('❌ Error getting blocked dates:', error);
-    res.status(500).json({ 
-      error: 'Error interno del servidor',
-      message: error.message 
+    console.error("❌ Error getting blocked dates:", error);
+    res.status(500).json({
+      error: "Error interno del servidor",
+      message: error.message,
     });
   }
+};
+
+export {
+  createReservation,
+  getUserReservations,
+  getReservationById,
+  updateReservation,
+  cancelReservation,
+  checkAvailability,
+  cancelActiveReservationByCar,
+  getAllReservations,
+  getActiveReservations,
+  getBlockedDates,
 };
