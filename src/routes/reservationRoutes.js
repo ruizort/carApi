@@ -1,8 +1,8 @@
 import express from "express";
-import * as reservationController from "../controllers/reservationController.js";
+import ReservationController from "../controllers/ReservationController.js";
 
 const router = express.Router();
-
+const reservationController = new ReservationController();
 // Rutas específicas primero
 router.post("/", reservationController.createReservation);
 router.get("/availability", reservationController.checkAvailability);
