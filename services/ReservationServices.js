@@ -1,15 +1,20 @@
-class ReservationServices {
-  // --- 1. CREAR RESERVA ---
-  createReservation = async (req, res) => {
-    try {
-      const { userId, carId, startDate, endDate } = req.body;
+import db from "../models/index.js";
+const { Reservation, Car, User } = db;
+import { Op } from "sequelize";
 
+class ReservationServices {
+  Reservation = db.Reservation;
+  Car = db.Car;
+  User = db.User;
+  // --- 1. CREAR RESERVA ---
+  createReservation = async ({ userId, carId, startDate, endDate }) => {
+    try {
       // Validaciones básicas
       if (!userId || !carId || !startDate || !endDate) {
-        return res.status(400).json({
+        return {
           message:
             "Todos los campos son requeridos: userId, carId, startDate, endDate",
-        });
+        };
       }
 
       // Convertir fechas a objetos Date
@@ -20,15 +25,15 @@ class ReservationServices {
 
       // Validar fechas
       if (start < today) {
-        return res.status(400).json({
+        return {
           message: "La fecha de inicio no puede ser en el pasado",
-        });
+        };
       }
 
       if (end <= start) {
-        return res.status(400).json({
+        return {
           message: "La fecha de fin debe ser posterior a la fecha de inicio",
-        });
+        };
       }
 
       // Calcular días de alquiler
@@ -36,29 +41,29 @@ class ReservationServices {
       const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
       if (totalDays < 1) {
-        return res.status(400).json({
+        return {
           message: "El período mínimo de alquiler es 1 día",
-        });
+        };
       }
 
       // Verificar si el auto existe
-      const car = await Car.findByPk(carId);
+      const car = await this.Car.findByPk(carId);
       if (!car) {
-        return res.status(404).json({
+        return {
           message: "Auto no encontrado",
-        });
+        };
       }
 
       // Verificar si el usuario existe
-      const user = await User.findByPk(userId);
+      const user = await this.User.findByPk(userId);
       if (!user) {
-        return res.status(404).json({
+        return {
           message: "Usuario no encontrado",
-        });
+        };
       }
 
       // Verificar disponibilidad del auto en las fechas seleccionadas
-      const existingReservation = await Reservation.findOne({
+      const existingReservation = await this.Reservation.findOne({
         where: {
           carId,
           status: {
@@ -86,16 +91,16 @@ class ReservationServices {
       });
 
       if (existingReservation) {
-        return res.status(409).json({
+        return {
           message: "El auto no está disponible en las fechas seleccionadas",
-        });
+        };
       }
 
       // Calcular precio total
       const totalPrice = car.price * totalDays;
 
       // Crear la reserva
-      const reservation = await Reservation.create({
+      const reservation = await this.Reservation.create({
         userId,
         carId,
         startDate,
@@ -106,7 +111,7 @@ class ReservationServices {
       });
 
       // Obtener la reserva con datos del auto y usuario
-      const reservationWithDetails = await Reservation.findByPk(
+      const reservationWithDetails = await this.Reservation.findByPk(
         reservation.id,
         {
           include: [
@@ -124,25 +129,23 @@ class ReservationServices {
         }
       );
 
-      res.status(201).json({
+      return {
         message: "Reserva creada exitosamente",
         reservation: reservationWithDetails,
-      });
+      };
     } catch (error) {
       console.error("Error al crear reserva:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 2. OBTENER RESERVAS DE UN USUARIO ---
-  getUserReservations = async (req, res) => {
+  getUserReservations = async ({ userId }) => {
     try {
-      const { userId } = req.params;
-
-      const reservations = await Reservation.findAll({
+      const reservations = await this.Reservation.findAll({
         where: { userId },
         include: [
           {
@@ -161,25 +164,23 @@ class ReservationServices {
         order: [["createdAt", "DESC"]],
       });
 
-      res.json({
+      return {
         reservations,
         count: reservations.length,
-      });
+      };
     } catch (error) {
       console.error("Error al obtener reservas:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 3. OBTENER UNA RESERVA POR ID ---
-  getReservationById = async (req, res) => {
+  getReservationById = async ({ id }) => {
     try {
-      const { id } = req.params;
-
-      const reservation = await Reservation.findByPk(id, {
+      const reservation = await this.Reservation.findByPk(id, {
         include: [
           {
             model: Car,
@@ -202,29 +203,26 @@ class ReservationServices {
       });
 
       if (!reservation) {
-        return res.status(404).json({
+        return {
           message: "Reserva no encontrada",
-        });
+        };
       }
 
-      res.json(reservation);
+      return { reservation };
     } catch (error) {
       console.error("Error al obtener reserva:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 4. ACTUALIZAR RESERVA ---
-  updateReservation = async (req, res) => {
+  updateReservation = async ({ id, startDate, endDate }) => {
     try {
-      const { id } = req.params;
-      const { startDate, endDate } = req.body;
-
       // Buscar la reserva
-      const reservation = await Reservation.findByPk(id, {
+      const reservation = await this.Reservation.findByPk(id, {
         include: [
           {
             model: Car,
@@ -234,16 +232,16 @@ class ReservationServices {
       });
 
       if (!reservation) {
-        return res.status(404).json({
+        return {
           message: "Reserva no encontrada",
-        });
+        };
       }
 
       // Solo permitir modificar reservas confirmadas
       if (reservation.status !== "confirmed") {
-        return res.status(400).json({
+        return {
           message: "Solo se pueden modificar reservas confirmadas",
-        });
+        };
       }
 
       // Si se envían nuevas fechas, verificar disponibilidad
@@ -258,15 +256,15 @@ class ReservationServices {
 
         // Validar nuevas fechas
         if (start < today) {
-          return res.status(400).json({
+          return {
             message: "La fecha de inicio no puede ser en el pasado",
-          });
+          };
         }
 
         if (end <= start) {
-          return res.status(400).json({
+          return {
             message: "La fecha de fin debe ser posterior a la fecha de inicio",
-          });
+          };
         }
 
         // Calcular nuevos días
@@ -274,13 +272,13 @@ class ReservationServices {
         const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
         if (totalDays < 1) {
-          return res.status(400).json({
+          return {
             message: "El período mínimo de alquiler es 1 día",
-          });
+          };
         }
 
         // Verificar disponibilidad (excluyendo la reserva actual)
-        const existingReservation = await Reservation.findOne({
+        const existingReservation = await this.Reservation.findOne({
           where: {
             carId: reservation.carId,
             id: { [Op.ne]: id }, // Excluir la reserva actual
@@ -309,10 +307,10 @@ class ReservationServices {
         });
 
         if (existingReservation) {
-          return res.status(409).json({
+          return {
             message:
               "El auto no está disponible en las nuevas fechas seleccionadas",
-          });
+          };
         }
 
         // Actualizar fechas y precio
@@ -325,7 +323,7 @@ class ReservationServices {
       await reservation.save();
 
       // Obtener reserva actualizada con relaciones
-      const updatedReservation = await Reservation.findByPk(id, {
+      const updatedReservation = await this.Reservation.findByPk(id, {
         include: [
           {
             model: Car,
@@ -340,78 +338,74 @@ class ReservationServices {
         ],
       });
 
-      res.json({
+      return {
         message: "Reserva actualizada exitosamente",
         reservation: updatedReservation,
-      });
+      };
     } catch (error) {
       console.error("Error al actualizar reserva:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 5. CANCELAR RESERVA ---
-  cancelReservation = async (req, res) => {
+  cancelReservation = async ({ id }) => {
     try {
-      const { id } = req.params;
-
-      const reservation = await Reservation.findByPk(id);
+      const reservation = await this.Reservation.findByPk(id);
 
       if (!reservation) {
-        return res.status(404).json({
+        return {
           message: "Reserva no encontrada",
-        });
+        };
       }
 
       // Solo permitir cancelar reservas confirmadas
       if (reservation.status !== "confirmed") {
-        return res.status(400).json({
+        return {
           message: "Solo se pueden cancelar reservas confirmadas",
-        });
+        };
       }
 
       // Cambiar estado a cancelado
       reservation.status = "cancelled";
       await reservation.save();
 
-      res.json({
+      return {
         message: "Reserva cancelada exitosamente",
         reservation,
-      });
+      };
     } catch (error) {
       console.error("Error al cancelar reserva:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 6. VERIFICAR DISPONIBILIDAD ---
-  checkAvailability = async (req, res) => {
+  checkAvailability = async ({ carId, startDate, endDate }) => {
     try {
-      const { carId, startDate, endDate } = req.query;
-
       if (!carId || !startDate || !endDate) {
-        return res.status(400).json({
+        return {
           message: "carId, startDate y endDate son requeridos",
-        });
+        };
       }
 
       const start = new Date(startDate);
       const end = new Date(endDate);
 
       if (end <= start) {
-        return res.status(400).json({
+        return {
           message: "La fecha de fin debe ser posterior a la fecha de inicio",
-        });
+        };
       }
 
       // Verificar disponibilidad
-      const existingReservation = await Reservation.findOne({
+      const existingReservation = await this.Reservation.findOne({
         where: {
           carId,
           status: {
@@ -440,7 +434,7 @@ class ReservationServices {
 
       const isAvailable = !existingReservation;
 
-      res.json({
+      return {
         isAvailable,
         message: isAvailable
           ? "El auto está disponible en las fechas seleccionadas"
@@ -448,23 +442,21 @@ class ReservationServices {
         carId,
         startDate,
         endDate,
-      });
+      };
     } catch (error) {
       console.error("Error al verificar disponibilidad:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
   // --- 7. CANCELAR RESERVA ACTIVA POR CAR ID (NUEVO MÉTODO) ---
-  cancelActiveReservationByCar = async (req, res) => {
+  cancelActiveReservationByCar = async ({ carId }) => {
     try {
-      const { carId } = req.params;
-
       // Buscar reserva activa para este auto
-      const activeReservation = await Reservation.findOne({
+      const activeReservation = await this.Reservation.findOne({
         where: {
           carId: carId,
           status: {
@@ -489,31 +481,31 @@ class ReservationServices {
       });
 
       if (!activeReservation) {
-        return res.status(404).json({
+        return {
           message: "No se encontró una reserva activa para este auto",
-        });
+        };
       }
 
       // Cancelar la reserva
       activeReservation.status = "cancelled";
       await activeReservation.save();
 
-      res.json({
+      return {
         message: "Reserva activa cancelada exitosamente",
         reservation: activeReservation,
-      });
+      };
     } catch (error) {
       console.error("Error al cancelar reserva activa:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
-  getAllReservations = async (req, res) => {
+  getAllReservations = async () => {
     try {
-      const reservations = await Reservation.findAll({
+      const reservations = await this.Reservation.findAll({
         include: [
           {
             model: Car,
@@ -529,22 +521,22 @@ class ReservationServices {
         order: [["createdAt", "DESC"]],
       });
 
-      res.json({
+      return {
         reservations,
         count: reservations.length,
-      });
+      };
     } catch (error) {
       console.error("Error al obtener todas las reservas:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
-  getActiveReservations = async (req, res) => {
+  getActiveReservations = async () => {
     try {
-      const reservations = await Reservation.findAll({
+      const reservations = await this.Reservation.findAll({
         where: {
           status: {
             [Op.in]: ["confirmed", "active"],
@@ -568,27 +560,25 @@ class ReservationServices {
         order: [["startDate", "ASC"]],
       });
 
-      res.json(reservations);
+      return reservations;
     } catch (error) {
       console.error("Error al obtener reservas activas:", error);
-      res.status(500).json({
+      return {
         message: "Error interno del servidor",
         error: error.message,
-      });
+      };
     }
   };
 
-  getBlockedDates = async (req, res) => {
+  getBlockedDates = async ({ carId }) => {
     try {
-      const { carId } = req.params;
-
       console.log("📅 Fetching blocked dates for car:", carId);
 
       // Validar carId
       if (!carId || isNaN(parseInt(carId))) {
-        return res.status(400).json({
+        return {
           error: "ID de auto inválido",
-        });
+        };
       }
 
       const reservations = await Reservation.findAll({
@@ -622,16 +612,16 @@ class ReservationServices {
 
       console.log("📅 Unique blocked dates:", uniqueBlockedDates.length);
 
-      res.json({
+      return {
         blockedDates: uniqueBlockedDates,
         count: uniqueBlockedDates.length,
-      });
+      };
     } catch (error) {
       console.error("❌ Error getting blocked dates:", error);
-      res.status(500).json({
+      return {
         error: "Error interno del servidor",
         message: error.message,
-      });
+      };
     }
   };
 }

@@ -1,8 +1,14 @@
+import db from "../models/index.js";
+import { Op } from "sequelize";
+
 class CarServices {
+  Car = db.Car;
+  Reservation = db.Reservation;
+
   checkCarAvailability = async (carId) => {
     const today = new Date();
 
-    const activeReservation = await Reservation.findOne({
+    const activeReservation = await this.Reservation.findOne({
       where: {
         carId,
         status: {
@@ -35,9 +41,9 @@ class CarServices {
   };
 
   // 1. Obtener todos los autos con información de disponibilidad
-  findAllCars = async (req, res) => {
+  findAllCars = async () => {
     try {
-      const cars = await Car.findAll({
+      const cars = await this.Car.findAll({
         attributes: [
           "id",
           "brand",
@@ -51,7 +57,7 @@ class CarServices {
       // Enriquecer con información de disponibilidad
       const carsWithAvailability = await Promise.all(
         cars.map(async (car) => {
-          const availability = await checkCarAvailability(car.id);
+          const availability = await this.checkCarAvailability(car.id);
 
           return {
             ...car.toJSON(),
@@ -64,21 +70,17 @@ class CarServices {
         })
       );
 
-      return res.status(200).send(carsWithAvailability);
+      return carsWithAvailability;
     } catch (error) {
       console.error("Error al obtener el catálogo:", error);
-      return res
-        .status(500)
-        .send({ message: "Error interno al recuperar los autos." });
+      return { message: "Error interno al recuperar los autos." };
     }
   };
 
   // 2. Obtener un auto por ID con disponibilidad
-  findCarById = async (req, res) => {
-    const id = req.params.id;
-
+  findCarById = async ({ id }) => {
     try {
-      const car = await Car.findByPk(id, {
+      const car = await this.Car.findByPk(id, {
         attributes: [
           "id",
           "brand",
@@ -90,13 +92,11 @@ class CarServices {
       });
 
       if (!car) {
-        return res
-          .status(404)
-          .send({ message: `Auto con id=${id} no encontrado.` });
+        return { message: `Auto con id=${id} no encontrado.` };
       }
 
       // Agregar información de disponibilidad
-      const availability = await checkCarAvailability(car.id);
+      const availability = await this.checkCarAvailability(car.id);
 
       const carWithAvailability = {
         ...car.toJSON(),
@@ -107,30 +107,28 @@ class CarServices {
         availableUntil: availability.nextAvailableDate,
       };
 
-      return res.status(200).send(carWithAvailability);
+      return carWithAvailability;
     } catch (error) {
       console.error(`Error al obtener auto ${id}:`, error);
-      return res.status(500).send({ message: "Error al recuperar el auto." });
+      return { message: "Error al recuperar el auto." };
     }
   };
 
   // 3. Crear un nuevo auto (CREATE)
-  createCar = async (req, res) => {
-    const { brand, model, price, imageUrl, description } = req.body;
-
+  createCar = async ({ brand, model, price, imageUrl, description }) => {
     // ✅ VALIDACIÓN 1: Campos obligatorios
     if (!brand || !model || !price) {
-      return res.status(400).send({
+      return {
         message:
           "Faltan campos obligatorios. 'brand', 'model' y 'price' son requeridos.",
-      });
+      };
     }
 
     // ✅ VALIDACIÓN 2: Tipos de datos y lógica
     if (isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-      return res.status(400).send({
+      return {
         message: "El precio debe ser un número positivo válido.",
-      });
+      };
     }
 
     try {
@@ -142,57 +140,45 @@ class CarServices {
         imageUrl: imageUrl || null, // Opcional
       };
 
-      const car = await Car.create(newCar);
-      return res.status(201).send(car);
+      const car = await this.Car.create(newCar);
+      return car;
     } catch (error) {
       console.error("Error al crear el auto:", error);
-      return res
-        .status(500)
-        .send({ message: "Error interno al crear el auto." });
+      return { message: "Error interno al crear el auto." };
     }
   };
 
   // 4. Actualizar un auto por ID (UPDATE)
-  updateCar = async (req, res) => {
-    const id = req.params.id;
-
+  updateCar = async ({ id, data }) => {
     try {
-      const [num] = await Car.update(req.body, { where: { id: id } });
+      const [num] = await this.Car.update(data, { where: { id: id } });
 
       if (num === 1) {
-        return res
-          .status(200)
-          .send({ message: "Auto actualizado exitosamente." });
+        return { message: "Auto actualizado exitosamente." };
       } else {
-        return res.status(404).send({
+        return {
           message: `Auto con id=${id} no encontrado para actualizar.`,
-        });
+        };
       }
     } catch (error) {
       console.error(`Error al actualizar auto ${id}:`, error);
-      return res.status(500).send({ message: "Error al actualizar el auto." });
+      return { message: "Error al actualizar el auto." };
     }
   };
 
   // 5. Eliminar un auto por ID (DELETE)
-  deleteCar = async (req, res) => {
-    const id = req.params.id;
-
+  deleteCar = async ({ id }) => {
     try {
-      const num = await Car.destroy({ where: { id: id } });
+      const num = await this.Car.destroy({ where: { id: id } });
 
       if (num === 1) {
-        return res
-          .status(200)
-          .send({ message: "Auto eliminado exitosamente." });
+        return { message: "Auto eliminado exitosamente." };
       } else {
-        return res
-          .status(404)
-          .send({ message: `Auto con id=${id} no encontrado para eliminar.` });
+        return { message: `Auto con id=${id} no encontrado para eliminar.` };
       }
     } catch (error) {
       console.error(`Error al eliminar auto ${id}:`, error);
-      return res.status(500).send({ message: "Error al eliminar el auto." });
+      return { message: "Error al eliminar el auto." };
     }
   };
 }
