@@ -1,28 +1,27 @@
-import db from "../../models/index.js";
 
-/**
- * Función que autentica la conexión a la base de datos y sincroniza los modelos.
- */
-async function connectAndSyncDB() {
-  try {
-    // 1. Probar la conexión
-    await db.sequelize.authenticate();
-    console.log("✅ Conexión a la base de datos exitosa.");
+//config/db/connection.js
 
-    // 2. Sincronizar modelos (crea/modifica tablas si es necesario)
-    await db.sequelize.sync({ alter: true });
-    console.log("✅ Tablas sincronizadas (Users, Cars, etc.).");
+// 📍 database/connection.js  <-- ¡AQUÍ SE CREA LA CONEXIÓN!
+import { Sequelize } from "sequelize";
+import process from "process";
+import configJson from "../config.json" with { type: "json" };
 
-    // Devolvemos la instancia de Express para que se pueda arrancar
-    return db.sequelize;
-  } catch (err) {
-    console.error(
-      "❌ Error al conectar o sincronizar la base de datos:",
-      err.message
-    );
-    // Relanzamos el error para que el archivo de arranque (index.js o app.js) lo capture
-    throw err;
-  }
+// ... lógica para determinar el entorno (env) ...
+
+const env = process.env.NODE_ENV || "development";
+const config = configJson[env];
+
+let sequelize; // La instancia se crea aquí 👇
+
+if (config.use_env_variable) {
+  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+} else {
+  sequelize = new Sequelize(
+    config.database,
+    config.username,
+    config.password,
+    config
+  );
 }
 
-export default connectAndSyncDB;
+export default sequelize;
