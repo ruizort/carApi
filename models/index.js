@@ -1,5 +1,4 @@
 "use strict";
-//models/index.js
 
 import { fileURLToPath, pathToFileURL } from "url";
 import fs from "fs";
@@ -40,7 +39,6 @@ Object.keys(db).forEach((modelName) => {
   }
 });
 
-db.sequelize = sequelize;
 db.sequelize = sequelize;
 
 export default db;
