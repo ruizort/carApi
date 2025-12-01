@@ -1,7 +1,7 @@
 import db from "../models/index.js";
 import { Op } from "sequelize";
 
-class CarServices {
+class CarService {
   Car = db.Car;
   Reservation = db.Reservation;
 
@@ -183,4 +183,4 @@ class CarServices {
   };
 }
 
-export default CarServices;
+export default CarService;

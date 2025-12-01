@@ -1,7 +1,7 @@
-import UserServices from "../services/userServices.js";
-
 class UserController {
-  userServices = new UserServices();
+  constructor(service) {
+    this.userServices = service;
+  }
 
   // --- 1. REGISTRO (Crear Usuario) ---
   register = async (req, res) => {

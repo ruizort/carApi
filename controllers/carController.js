@@ -1,7 +1,7 @@
-import CarServices from "../services/carServices.js";
-
 class CarController {
-  carServices = new CarServices();
+  constructor(service) {
+    this.carServices = service;
+  }
 
   // 1. Obtener todos los autos con información de disponibilidad
   findAllCars = async (req, res) => {

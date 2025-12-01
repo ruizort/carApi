@@ -1,7 +1,7 @@
-import ReservationServices from "../services/ReservationServices.js";
-
 class ReservationController {
-  reservationServices = new ReservationServices();
+  constructor(service) {
+    this.reservationServices = service;
+  }
 
   // --- 1. CREAR RESERVA ---
   createReservation = async (req, res) => {

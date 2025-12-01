@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 
 const User = db.User;
 
-class UserServices {
+class UserService {
   // Configuración para el hashing (número de rondas de seguridad)
   saltRounds = 10;
 
@@ -89,4 +89,4 @@ class UserServices {
   };
 }
 
-export default UserServices;
+export default UserService;

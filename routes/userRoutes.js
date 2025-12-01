@@ -1,10 +1,8 @@
 // src/routes/userRoutes.js
+import { Router } from "express";
+import { userController } from "../container/container.js";
 
-import express from "express";
-import UserController from "../controllers/UserController.js";
-
-const router = express.Router();
-const userController = new UserController();
+const router = Router();
 
 // 1. Ruta POST para REGISTRAR un nuevo usuario.
 //    (Ruta final será: POST /users)

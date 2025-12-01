@@ -3,6 +3,9 @@ node_modules/
 
 # Archivos y carpetas de entorno
 .env
+.env.dev
+.env.production
+.env.test
 .DS_Store
 
 # Logs y bases de datos locales
