@@ -1,8 +1,12 @@
+//config/db/connectAndSyncDB.js
+
+// 📍 database/connection.js  <-- ¡AQUÍ SE CREA LA CONEXIÓN!
 import db from "../../models/index.js";
 
 /**
  * Función que autentica la conexión a la base de datos y sincroniza los modelos.
  */
+
 async function connectAndSyncDB() {
   try {
     // 1. Probar la conexión

@@ -1,5 +1,4 @@
 // models/User.js
-"use strict";
 import { Model } from "sequelize";
 
 export default (sequelize, DataTypes) => {
@@ -28,6 +27,9 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+          isEmail: true,
+        },
       },
       password: {
         type: DataTypes.STRING,

@@ -1,8 +1,7 @@
-import express from "express";
-import CarController from "../controllers/CarController.js";
+import { Router } from "express";
+import { carController } from "../container/container.js";
 
-const router = express.Router();
-const carController = new CarController();
+const router = Router();
 
 router.route("/").get(carController.findAllCars).post(carController.createCar);
 
